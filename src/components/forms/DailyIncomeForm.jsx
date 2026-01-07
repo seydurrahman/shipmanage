@@ -24,6 +24,16 @@ export default function DailyIncomeForm() {
   const [editingId, setEditingId] = useState(null);
   const [projects, setProjects] = useState([]);
 
+  // Filters: ship-wise and month-wise
+  const [filterShip, setFilterShip] = useState("");
+  const [filterMonth, setFilterMonth] = useState("");
+
+  const filteredIncomes = incomes.filter((inc) => {
+    if (filterShip && String(inc.ship) !== String(filterShip)) return false;
+    if (filterMonth && !inc.date.startsWith(filterMonth)) return false;
+    return true;
+  });
+
   useEffect(() => {
     fetchShips();
     fetchIncomes();
@@ -312,8 +322,40 @@ export default function DailyIncomeForm() {
             <p>Loading...</p>
           ) : incomes.length === 0 ? (
             <p>No incomes found.</p>
+          ) : filteredIncomes.length === 0 ? (
+            <p>No incomes found for selected filters.</p>
           ) : (
             <>
+              <div className="flex gap-2 mb-4">
+                <select
+                  className="p-2 rounded bg-white/70 text-black"
+                  value={filterShip}
+                  onChange={(e) => setFilterShip(e.target.value)}
+                >
+                  <option value="">All Ships</option>
+                  {ships.map((s) => (
+                    <option key={s.id} value={s.id}>
+                      {s.name}
+                    </option>
+                  ))}
+                </select>
+                <input
+                  type="month"
+                  className="p-2 rounded bg-white/70 text-black"
+                  value={filterMonth}
+                  onChange={(e) => setFilterMonth(e.target.value)}
+                />
+                <button
+                  onClick={() => {
+                    setFilterShip("");
+                    setFilterMonth("");
+                  }}
+                  className="px-3 py-2 bg-gray-600 rounded text-white"
+                >
+                  Clear
+                </button>
+              </div>
+
               <div className="hidden md:block overflow-x-auto">
                 <table className="w-full text-white min-w-[800px]">
                   <thead className="bg-white/20">
@@ -329,7 +371,7 @@ export default function DailyIncomeForm() {
                     </tr>
                   </thead>
                   <tbody>
-                    {incomes.map((inc) => (
+                    {filteredIncomes.map((inc) => (
                       <tr key={inc.id} className="hover:bg-white/10">
                         <td className="p-2">{inc.date}</td>
                         <td className="p-2">{getShipName(inc.ship)}</td>
@@ -365,7 +407,7 @@ export default function DailyIncomeForm() {
               </div>
 
               <div className="md:hidden space-y-4">
-                {incomes.map((inc) => (
+                {filteredIncomes.map((inc) => (
                   <div
                     key={inc.id}
                     className="glass-card p-4 text-white rounded-lg shadow-md"
