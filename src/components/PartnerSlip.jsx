@@ -1,15 +1,17 @@
 import React, { useState, useEffect } from "react";
-import api from "../api/axios";
+import api, { fetchAll } from "../api/axios";
 import { format } from "date-fns";
 
 const PartnerReport = () => {
   const [selectedMonth, setSelectedMonth] = useState(
-    format(new Date(), "yyyy-MM")
+    format(new Date(), "yyyy-MM"),
   );
   const [partners, setPartners] = useState([]);
   const [ships, setShips] = useState([]);
   const [incomes, setIncomes] = useState([]);
   const [expenses, setExpenses] = useState([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 12;
 
   // Fetch all data
   useEffect(() => {
@@ -17,18 +19,13 @@ const PartnerReport = () => {
     fetchPartners();
     fetchIncomes();
     fetchExpenses();
+    setCurrentPage(1);
   }, [selectedMonth]);
 
   const fetchShips = async () => {
     try {
-      const response = await api.get("ships/");
-      const data = response.data;
-      const shipList = Array.isArray(data)
-        ? data
-        : Array.isArray(data.results)
-        ? data.results
-        : [];
-      setShips(shipList);
+      const data = await fetchAll("ships/");
+      setShips(data);
     } catch (error) {
       console.error("Error fetching ships:", error);
       setShips([]);
@@ -37,14 +34,8 @@ const PartnerReport = () => {
 
   const fetchPartners = async () => {
     try {
-      const res = await api.get("partners/");
-      const data = res.data;
-      const partnerList = Array.isArray(data)
-        ? data
-        : Array.isArray(data.results)
-        ? data.results
-        : [];
-      setPartners(partnerList);
+      const data = await fetchAll("partners/");
+      setPartners(data);
     } catch (error) {
       console.error("Error fetching partners:", error);
       setPartners([]);
@@ -53,14 +44,8 @@ const PartnerReport = () => {
 
   const fetchIncomes = async () => {
     try {
-      const res = await api.get("incomes/");
-      const data = res.data;
-      const incomeList = Array.isArray(data)
-        ? data
-        : Array.isArray(data.results)
-        ? data.results
-        : [];
-      setIncomes(incomeList);
+      const data = await fetchAll("incomes/");
+      setIncomes(data);
     } catch (error) {
       console.error("Error fetching incomes:", error);
       setIncomes([]);
@@ -69,14 +54,8 @@ const PartnerReport = () => {
 
   const fetchExpenses = async () => {
     try {
-      const res = await api.get("expenses/");
-      const data = res.data;
-      const expenseList = Array.isArray(data)
-        ? data
-        : Array.isArray(data.results)
-        ? data.results
-        : [];
-      setExpenses(expenseList);
+      const data = await fetchAll("expenses/");
+      setExpenses(data);
     } catch (error) {
       console.error("Error fetching expenses:", error);
       setExpenses([]);
@@ -90,7 +69,7 @@ const PartnerReport = () => {
     const endDate = new Date(
       startDate.getFullYear(),
       startDate.getMonth() + 1,
-      0
+      0,
     );
 
     // Filter incomes for this ship and month
@@ -111,13 +90,13 @@ const PartnerReport = () => {
     const totalIncome = shipIncomes.reduce(
       (sum, income) =>
         sum + parseFloat(income.actual_amount ?? income.amount ?? 0),
-      0
+      0,
     );
 
     // Calculate total expenses
     const totalExpenses = shipExpenses.reduce(
       (sum, expense) => sum + parseFloat(expense.amount || 0),
-      0
+      0,
     );
 
     // Net income = total income - total expenses
@@ -155,6 +134,12 @@ const PartnerReport = () => {
     });
   });
 
+  const totalPages = Math.max(1, Math.ceil(slips.length / pageSize));
+  const displayedSlips = slips.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize,
+  );
+
   return (
     <div className="min-h-screen bg-gray-100 p-6">
       <div className="bg-white p-6 rounded shadow print:shadow-none">
@@ -180,9 +165,9 @@ const PartnerReport = () => {
 
         {/* Slip Grid - EXACTLY as you had it, just fixed the data */}
         <div id="print-area" className="grid grid-cols-3 gap-4">
-          {slips.map((slip, index) => (
+          {displayedSlips.map((slip, i) => (
             <div
-              key={index}
+              key={(currentPage - 1) * pageSize + i}
               className="border p-3 rounded shadow-sm text-sm h-52 flex flex-col justify-between print-slip"
             >
               <div>
@@ -217,6 +202,29 @@ const PartnerReport = () => {
               </p>
             </div>
           ))}
+        </div>
+
+        {/* Pagination controls */}
+        <div className="flex items-center justify-center gap-3 mt-4 no-print">
+          <button
+            onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+            disabled={currentPage === 1}
+            className="px-3 py-1 bg-gray-300 rounded disabled:opacity-50"
+          >
+            Prev
+          </button>
+
+          <span>
+            Page {currentPage} / {totalPages}
+          </span>
+
+          <button
+            onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+            disabled={currentPage === totalPages}
+            className="px-3 py-1 bg-gray-300 rounded disabled:opacity-50"
+          >
+            Next
+          </button>
         </div>
       </div>
     </div>

@@ -10,6 +10,7 @@ export default function DailyIncomeForm() {
     sand_rate: "",
     sands_amount: "",
     amount: "",
+    daily_food_salary: "",
     actual_amount: "",
     description: "",
     is_active: true,
@@ -48,10 +49,22 @@ export default function DailyIncomeForm() {
       setFormData((prev) => ({
         ...prev,
         amount: total,
-        actual_amount: total, // optional: auto-fill
       }));
     }
   }, [formData.sand_rate, formData.sands_amount]);
+
+  // Recalculate actual_amount whenever amount or daily_food_salary change
+  useEffect(() => {
+    const amount = parseFloat(formData.amount);
+    const daily = parseFloat(formData.daily_food_salary);
+
+    if (!isNaN(amount)) {
+      const actual = (amount - (isNaN(daily) ? 0 : daily)).toFixed(2);
+      setFormData((prev) => ({ ...prev, actual_amount: actual }));
+    } else {
+      setFormData((prev) => ({ ...prev, actual_amount: "" }));
+    }
+  }, [formData.amount, formData.daily_food_salary]);
 
   const fetchShips = async () => {
     try {
@@ -107,6 +120,8 @@ export default function DailyIncomeForm() {
       sand_rate: item.sand_rate || "",
       sands_amount: item.sands_amount || "",
       amount: item.amount,
+      daily_food_salary: item.daily_food_salary || "",
+      actual_amount: item.actual_amount || item.amount || "",
       description: item.description || "",
       is_active: item.is_active,
     });
@@ -138,9 +153,15 @@ export default function DailyIncomeForm() {
       }
       amount = Math.round(amount * 100) / 100;
 
+      const dailyRaw = String(formData.daily_food_salary).replace(/,/g, "");
+      const daily = dailyRaw ? parseFloat(dailyRaw) : 0;
+      const actual_amount = Math.round((amount - (daily || 0)) * 100) / 100;
+
       const payload = {
         ...formData,
         amount,
+        daily_food_salary: daily,
+        actual_amount,
         project: formData.project || null,
       };
 
@@ -246,7 +267,15 @@ export default function DailyIncomeForm() {
             value={formData.amount}
             readOnly
           />
-
+          <input
+            name="daily_food_salary"
+            type="number"
+            step="0.01"
+            placeholder="Daily Food (Khoraki)"
+            className="w-full p-2 rounded bg-white/70 text-black"
+            value={formData.daily_food_salary}
+            onChange={handleChange}
+          />
           <input
             name="actual_amount"
             type="number"
@@ -365,6 +394,7 @@ export default function DailyIncomeForm() {
                       <th className="p-2 text-left">Rate</th>
                       <th className="p-2 text-left">Sands_CFT</th>
                       <th className="p-2 text-left">Amount</th>
+                      <th className="p-2 text-left">Daily Food</th>
                       <th className="p-2 text-left">Actual Amount</th>
                       <th className="p-2 text-left">Status</th>
                       <th className="p-2 text-center">Actions</th>
@@ -379,6 +409,9 @@ export default function DailyIncomeForm() {
                         <td className="p-2">{inc.sands_amount}</td>
                         <td className="p-2">
                           Tk {parseFloat(inc.amount || 0).toFixed(2)}
+                        </td>
+                        <td className="p-2">
+                          Tk {parseFloat(inc.daily_food_salary || 0).toFixed(2)}
                         </td>
                         <td className="p-2">
                           Tk {parseFloat(inc.actual_amount || 0).toFixed(2)}

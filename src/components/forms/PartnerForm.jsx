@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import api from "../../api/axios";
+import api, { fetchAll } from "../../api/axios";
 
 export default function PartnerForm() {
   const emptyForm = {
@@ -33,8 +33,7 @@ export default function PartnerForm() {
   ========================= */
   const fetchShips = async () => {
     try {
-      const res = await api.get("ships/");
-      const data = Array.isArray(res.data) ? res.data : res.data.results || [];
+      const data = await fetchAll("ships/");
       setShips(data);
     } catch (err) {
       console.error("Error fetching ships", err);
@@ -47,8 +46,7 @@ export default function PartnerForm() {
   const fetchPartners = async () => {
     setLoading(true);
     try {
-      const res = await api.get("partners/");
-      const data = Array.isArray(res.data) ? res.data : res.data.results || [];
+      const data = await fetchAll("partners/");
       setPartners(data);
     } catch (err) {
       console.error("Error fetching partners", err);
