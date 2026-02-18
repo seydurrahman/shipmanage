@@ -19,7 +19,7 @@ const Sidebar = ({ isOpen, closeSidebar }) => {
 
       {/* SIDEBAR */}
       <aside
-        className={`fixed md:static top-0 left-0 h-full w-70 bg-white border-r shadow-lg z-50 
+        className={`fixed md:static top-0 left-0 h-full w-72 bg-white border-r shadow-lg z-50 
           transform transition-transform duration-300 ease-in-out
           ${isOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}`}
       >
